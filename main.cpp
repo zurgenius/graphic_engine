@@ -4,9 +4,8 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <filesystem> // Для работы с файлами
+#include <filesystem>
 
-// Подключаем ImGui
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
@@ -17,22 +16,21 @@
 
 namespace fs = std::filesystem;
 
+// глобальные константы
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
-const std::string ASSETS_DIR = "../assets/"; // Путь к папке с фигурами
+const std::string ASSETS_DIR = "../assets/";
 
-// Глобальное состояние для UI
 float cameraZoom = 5.0f;
 float rotX = 0.0f;
 float rotY = 0.0f;
 bool autoRotate = true;
-char importPathBuffer[512] = ""; // Буфер для ввода пути
+char importPathBuffer[512] = "";
 
 uint32_t MakeColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255) {
     return (a << 24) | (b << 16) | (g << 8) | r;
 }
 
-// Функция для безопасной загрузки модели
 void ReloadMesh(Mesh& mesh, const std::string& filename) {
     std::string fullPath = ASSETS_DIR + filename;
     if (fs::exists(fullPath)) {
@@ -46,7 +44,6 @@ void ReloadMesh(Mesh& mesh, const std::string& filename) {
     }
 }
 
-// Функция импорта файла
 void ImportAndLoad(Mesh& mesh, const std::string& sourcePath) {
     if (!fs::exists(sourcePath)) {
         std::cerr << "Import failed: Source file doesn't exist." << std::endl;
@@ -58,15 +55,12 @@ void ImportAndLoad(Mesh& mesh, const std::string& sourcePath) {
         std::string filename = src.filename().string();
         std::string destPath = ASSETS_DIR + filename;
         
-        // Создаем папку assets если нет (хотя она должна быть)
         if (!fs::exists(ASSETS_DIR)) fs::create_directory(ASSETS_DIR);
 
-        // Копируем файл, если пути отличаются
         if (fs::absolute(src) != fs::absolute(destPath)) {
             fs::copy_file(src, destPath, fs::copy_options::overwrite_existing);
         }
         
-        // Загружаем
         ReloadMesh(mesh, filename);
     } catch (const std::exception& e) {
         std::cerr << "Import error: " << e.what() << std::endl;
@@ -74,7 +68,6 @@ void ImportAndLoad(Mesh& mesh, const std::string& sourcePath) {
 }
 
 int main() {
-    // 1. Init GLFW/OpenGL
     if (!glfwInit()) return -1;
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -86,7 +79,6 @@ int main() {
     glfwMakeContextCurrent(window);
     gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
 
-    // 2. Init ImGui
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -96,11 +88,9 @@ int main() {
 
     Renderer renderer(WINDOW_WIDTH, WINDOW_HEIGHT);
 
-    // 3. Загрузка модели по умолчанию
     Mesh myMesh;
-    ReloadMesh(myMesh, "cube.obj"); // Стартуем с куба
+    ReloadMesh(myMesh, "cube.obj");
     
-    // Фолбек, если ничего нет
     if (myMesh.faces.empty()) {
          myMesh.vertices = {{-1,-1,0}, {0,1,0}, {1,-1,0}};
          myMesh.faces = {{0, 1, 2}};
@@ -109,26 +99,25 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        // --- IMGUI UPDATE ---
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // Обработка мыши (Вращение)
-        // Если мышь НЕ над окном ImGui, то можно крутить
+        //обрабатываем вращение мыши через imGUI
         if (!io.WantCaptureMouse && !autoRotate) {
             if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
-                rotY += io.MouseDelta.x * 0.01f; // Вращение по горизонтали (вокруг Y)
-                rotX += io.MouseDelta.y * 0.01f; // Вращение по вертикали (вокруг X)
+                rotY += io.MouseDelta.x * 0.01f;
+                rotX += io.MouseDelta.y * 0.01f;
             }
         }
         
+
         if (autoRotate) {
             rotX += 0.01f;
             rotY += 0.02f;
         }
 
-        // Окно управления внизу
+        // --- UI ---
         ImGui::SetNextWindowPos(ImVec2(0, WINDOW_HEIGHT - 140));
         ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH, 140));
         ImGui::Begin("Control Panel", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
@@ -163,24 +152,20 @@ int main() {
 
         renderer.Clear(MakeColor(40, 40, 40));
 
-        // МАТРИЦЫ (Интегрируем переменные UI)
-        // Используем RotY и RotX для более привычного управления мышью
+
         Mat4 matRotY = Mat4::RotateY(rotY);
         Mat4 matRotX = Mat4::RotateX(rotX); 
         
-        // Zoom вместо хардкода 5.0f
         Mat4 matTrans = Mat4::Translate(0.0f, 0.0f, cameraZoom); 
 
         float aspect = (float)WINDOW_HEIGHT / (float)WINDOW_WIDTH;
         Mat4 matProj = Mat4::Projection(1.57f, aspect, 0.1f, 100.0f);
 
-        // Порядок: Вращение X * Вращение Y -> потом Сдвиг
         Mat4 matWorld = Mat4::Identity();
         matWorld = matRotY * matWorld;
         matWorld = matRotX * matWorld;
         matWorld = matTrans * matWorld;
 
-        // ОТРИСОВКА MESH (Твой рабочий код)
         for (const auto& face : myMesh.faces) {
             if (face.v[0] >= myMesh.vertices.size() || 
                 face.v[1] >= myMesh.vertices.size() || 
@@ -244,7 +229,7 @@ int main() {
         glfwSwapBuffers(window);
     }
 
-    // Cleanup
+    
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

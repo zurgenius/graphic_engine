@@ -53,8 +53,6 @@ void Renderer::DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
             int w1 = EdgeFunction(x2, y2, x0, y0, x, y);
             int w2 = EdgeFunction(x0, y0, x1, y1, x, y);
 
-            // Если точка внутри - рисуем
-            // (Обратите внимание: >= 0 работает для стандартного обхода вершин против часовой стрелки)
             if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
                 PutPixel(x, y, color);
             }
@@ -63,7 +61,6 @@ void Renderer::DrawTriangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 }
 
 Renderer::Renderer(int width, int height) : m_width(width), m_height(height) {
-    // Выделяем память под пиксели (width * height)
     m_buffer.resize(width * height); 
     InitOpenGL();
 }
@@ -76,7 +73,6 @@ Renderer::~Renderer() {
 }
 
 void Renderer::Clear(uint32_t color) {
-    // Быстрая заливка массива одним значением
     std::fill(m_buffer.begin(), m_buffer.end(), color);
 }
 
@@ -90,11 +86,9 @@ void Renderer::PutPixel(int x, int y, uint32_t color) {
 }
 
 void Renderer::DrawBuffer() {
-    // 1. Обновляем текстуру данными из нашего массива
     glBindTexture(GL_TEXTURE_2D, m_textureID);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, m_buffer.data());
 
-    // 2. Рисуем квадрат на весь экран с этой текстурой
     glUseProgram(m_shaderProgram);
     glBindVertexArray(m_VAO);
     glDrawArrays(GL_TRIANGLES, 0, 6);

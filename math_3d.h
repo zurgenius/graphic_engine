@@ -4,17 +4,12 @@
 struct Vec3 {
     float x, y, z;
 
-    // Конструктор
     Vec3(float _x = 0, float _y = 0, float _z = 0) : x(_x), y(_y), z(_z) {}
 
-    // Операторы сложения и вычитания
     Vec3 operator+(const Vec3& v) const { return Vec3(x + v.x, y + v.y, z + v.z); }
     Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
-    
-    // Умножение на число (скаляр)
     Vec3 operator*(float f) const { return Vec3(x * f, y * f, z * f); }
 
-    // Нормализация вектора (приведение длины к 1)
     Vec3 Normalize() const {
         float length = std::sqrt(x*x + y*y + z*z);
         return Vec3(x / length, y / length, z / length);
@@ -22,16 +17,14 @@ struct Vec3 {
 };
 
 struct Mat4 {
-    float m[4][4]; // Строка, Столбец
+    float m[4][4];
 
     Mat4() {
-        // Инициализация нулями
         for(int i=0; i<4; i++)
             for(int j=0; j<4; j++)
                 m[i][j] = 0.0f;
     }
 
-    // Создание Единичной матрицы (Identity)
     static Mat4 Identity() {
         Mat4 res;
         res.m[0][0] = 1.0f; res.m[1][1] = 1.0f; res.m[2][2] = 1.0f; res.m[3][3] = 1.0f;
@@ -42,18 +35,12 @@ struct Mat4 {
     static Mat4 RotateX(float angleRadians);
     static Mat4 RotateY(float angleRadians);
     static Mat4 RotateZ(float angleRadians);
-    
-    // Матрица сдвига
     static Mat4 Translate(float x, float y, float z);
-
-    // Матрица Проекции (Perspective)
     static Mat4 Projection(float fov, float aspectRatio, float zNear, float zFar);
 
-    // Перемножение матриц
     Mat4 operator*(const Mat4& other) const;
 };
 
-// Главная функция: Умножает вектор на матрицу и делит на W (перспектива)
 Vec3 MultiplyMatrixVector(const Vec3& i, const Mat4& m);
 
 float DotProduct(const Vec3& a, const Vec3& b);
