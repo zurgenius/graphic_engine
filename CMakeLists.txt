@@ -25,6 +25,7 @@ set(PROJECT_SOURCES
     "${CMAKE_SOURCE_DIR}/renderer.cpp"
     "${CMAKE_SOURCE_DIR}/math_3d.cpp"
     "${CMAKE_SOURCE_DIR}/mesh.cpp"
+    "${CMAKE_SOURCE_DIR}/shapes_generator.cpp"
 )
 
 # 2. Файлы ImGui (лежат там же, где заголовки)

@@ -13,6 +13,7 @@
 #include "renderer.h"
 #include "mesh.h"
 #include "math_3d.h"
+#include "shapes_generator.h"
 
 namespace fs = std::filesystem;
 
@@ -87,7 +88,8 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     Renderer renderer(WINDOW_WIDTH, WINDOW_HEIGHT);
-
+    ShapesGenerator::CreateSmoothSphere("../assets/sphere.obj", 1.0f, 50, 50);
+    ShapesGenerator::CreateSmoothTorus("../assets/torus.obj", 1.0f, 0.4f, 60, 30);
     Mesh myMesh;
     ReloadMesh(myMesh, "cube.obj");
     
